@@ -19,9 +19,9 @@
     <ItemGroup Condition=" '$(PackageSources)' == '' ">
         <!-- Package sources used to restore packages. By default, registered sources under %APPDATA%\NuGet\NuGet.Config will be used -->
         <!-- The official NuGet package source (https://www.nuget.org/api/v2/) will be excluded if package sources are specified and it does not appear in the list -->
-        <!--
             <PackageSource Include="https://www.nuget.org/api/v2/" />
-            <PackageSource Include="https://my-nuget-source/nuget/" />
+            <PackageSource Include="http://devbuild/nuget/nuget/" />
+        <!--
         -->
     </ItemGroup>
 
@@ -36,14 +36,21 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <PackagesProjectConfig Condition=" '$(OS)' == 'Windows_NT'">$(MSBuildProjectDirectory)\packages.$(MSBuildProjectName.Replace(' ', '_')).config</PackagesProjectConfig>
-        <PackagesProjectConfig Condition=" '$(OS)' != 'Windows_NT'">$(MSBuildProjectDirectory)\packages.$(MSBuildProjectName).config</PackagesProjectConfig>
+        <PackagesProjectConfig>packages.$(MSBuildProjectName.Replace(' ', '_')).config</PackagesProjectConfig>
     </PropertyGroup>
 
-    <PropertyGroup>
-      <PackagesConfig Condition="Exists('$(MSBuildProjectDirectory)\packages.config')">$(MSBuildProjectDirectory)\packages.config</PackagesConfig>
-      <PackagesConfig Condition="Exists('$(PackagesProjectConfig)')">$(PackagesProjectConfig)</PackagesConfig>
-    </PropertyGroup>
+    <Choose>
+        <When Condition="Exists('$(PackagesProjectConfig)')">
+            <PropertyGroup>
+                <PackagesConfig>$(PackagesProjectConfig)</PackagesConfig>
+            </PropertyGroup>
+        </When>
+        <When Condition="Exists('packages.config')">
+            <PropertyGroup>
+                <PackagesConfig>packages.config</PackagesConfig>
+            </PropertyGroup>
+        </When>
+    </Choose>
     
     <PropertyGroup>
         <!-- NuGet command -->
@@ -51,7 +58,7 @@
         <PackageSources Condition=" $(PackageSources) == '' ">@(PackageSource)</PackageSources>
 
         <NuGetCommand Condition=" '$(OS)' == 'Windows_NT'">"$(NuGetExePath)"</NuGetCommand>
-        <NuGetCommand Condition=" '$(OS)' != 'Windows_NT' ">mono --runtime=v4.0.30319 "$(NuGetExePath)"</NuGetCommand>
+        <NuGetCommand Condition=" '$(OS)' != 'Windows_NT' ">mono --runtime=v4.0.30319 $(NuGetExePath)</NuGetCommand>
 
         <PackageOutputDir Condition="$(PackageOutputDir) == ''">$(TargetDir.Trim('\\'))</PackageOutputDir>
 
