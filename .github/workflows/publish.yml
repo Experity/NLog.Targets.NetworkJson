@@ -31,20 +31,24 @@ jobs:
           HMM=$(date -u +'%-H%M')  # %-H: no zero-padding on hour, intentional
           echo "version=${YY}.${MM}.${DD}.${HMM}" >> "$GITHUB_OUTPUT"
 
+      - name: Create local NuGet feed directory
+        shell: bash
+        run: mkdir -p "$USERPROFILE/nuget-packages"
+
       - name: Restore
-        run: dotnet restore NLog.Targets.NetworkJson.sln
+        run: dotnet restore Target/NLog.Targets.NetworkJson.csproj
 
       - name: Build
         run: >
-          dotnet build NLog.Targets.NetworkJson.sln -c Release --no-restore
+          dotnet build Target/NLog.Targets.NetworkJson.csproj -c Release --no-restore
           -p:Version=${{ steps.version.outputs.version }}
 
       - name: Test
-        run: dotnet test NLog.Targets.NetworkJson.sln -c Release --no-build
+        run: dotnet test Tests/NLog.Targets.NetworkJson.Tests.csproj -c Release
 
       - name: Pack
         run: >
-          dotnet pack NLog.Targets.NetworkJson.sln -c Release --no-build
+          dotnet pack Target/NLog.Targets.NetworkJson.csproj -c Release --no-build
           --output ./artifacts
           -p:Version=${{ steps.version.outputs.version }}
 
@@ -53,12 +57,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          dotnet nuget add source \
-            --username "${{ github.actor }}" \
-            --password "$GITHUB_TOKEN" \
-            --store-password-in-clear-text \
-            --name github \
-            "https://nuget.pkg.github.com/Experity/index.json"
           for pkg in ./artifacts/*.nupkg; do
             dotnet nuget push "$pkg" \
               --source github \
