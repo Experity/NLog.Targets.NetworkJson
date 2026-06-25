@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Data;
-using System.Data.SQLite;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using NLog.Targets.NetworkJSON.ExtensionMethods;
 
 namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
@@ -11,7 +11,7 @@ namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
     public class LogStorageTable
     {
         public const string TableName = "LogStorage";
-        
+
         public class Columns
         {
             public static ColumnInfo MessageId { get; } = new ColumnInfo(nameof(MessageId), "INTEGER PRIMARY KEY ASC", DbType.Int64, 0);
@@ -23,39 +23,37 @@ namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
             public static ColumnInfo RetryCount { get; } = new ColumnInfo(nameof(RetryCount), "INT2", DbType.Int16, 6);
         }
 
-        public static bool TableExists(SQLiteConnection dbConnection)
+        public static bool TableExists(SqliteConnection dbConnection)
         {
             var tableExistsSql = $"SELECT name FROM sqlite_master WHERE type='table' AND name='{TableName}'";
-            var cmd = new SQLiteCommand(tableExistsSql, dbConnection);
+            var cmd = new SqliteCommand(tableExistsSql, dbConnection);
             var tableName = cmd.ExecuteScalar()?.ToString();
             return (!tableName.IsNullOrEmpty());
         }
-        
-        public static void CreateTable(SQLiteConnection dbConnection)
+
+        public static void CreateTable(SqliteConnection dbConnection)
         {
             var tableCreateSql = $"CREATE TABLE {TableName} ({Columns.MessageId.ColumnName} {Columns.MessageId.ColumnDDL}, {Columns.Endpoint.ColumnName} {Columns.Endpoint.ColumnDDL}, {Columns.EndpointType.ColumnName} {Columns.EndpointType.ColumnDDL}, {Columns.EndpointExtraInfo.ColumnName} {Columns.EndpointExtraInfo.ColumnDDL}, {Columns.LogMessage.ColumnName} {Columns.LogMessage.ColumnDDL}, {Columns.CreatedOn.ColumnName} {Columns.CreatedOn.ColumnDDL}, {Columns.RetryCount.ColumnName} {Columns.RetryCount.ColumnDDL})";
-            var cmd = new SQLiteCommand(tableCreateSql, dbConnection);
+            var cmd = new SqliteCommand(tableCreateSql, dbConnection);
             cmd.ExecuteNonQuery();
         }
 
-        public static int InsertLogRecord(SQLiteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
+        public static int InsertLogRecord(SqliteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
         {
             var cmd = BuildInsertCommand(dbConnection, endpoint, endpointType, endpointExtraInfo, logMessage);
-
             return cmd.ExecuteNonQuery();
         }
 
-        public static async Task<int> InsertLogRecordAsync(SQLiteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
+        public static async Task<int> InsertLogRecordAsync(SqliteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
         {
             var cmd = BuildInsertCommand(dbConnection, endpoint, endpointType, endpointExtraInfo, logMessage);
-
             return await cmd.ExecuteNonQueryAsync();
         }
 
-        private static SQLiteCommand BuildInsertCommand(SQLiteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
+        private static SqliteCommand BuildInsertCommand(SqliteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage)
         {
             var dataInsertSql = $"INSERT INTO {TableName} ({Columns.Endpoint.ColumnName}, {Columns.EndpointType.ColumnName}, {Columns.EndpointExtraInfo.ColumnName}, {Columns.LogMessage.ColumnName}, {Columns.RetryCount.ColumnName}, {Columns.CreatedOn.ColumnName}) VALUES ({Columns.Endpoint.ParameterName}, {Columns.EndpointType.ParameterName}, {Columns.EndpointExtraInfo.ParameterName}, {Columns.LogMessage.ParameterName}, {Columns.RetryCount.ParameterName}, {Columns.CreatedOn.ParameterName})";
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
+            var cmd = new SqliteCommand(dataInsertSql, dbConnection);
 
             var param = Columns.Endpoint.GetParamterForColumn();
             param.Value = endpoint;
@@ -66,7 +64,7 @@ namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
             cmd.Parameters.Add(param);
 
             param = Columns.EndpointExtraInfo.GetParamterForColumn();
-            param.Value = endpointExtraInfo;
+            param.Value = (object)endpointExtraInfo ?? DBNull.Value;
             cmd.Parameters.Add(param);
 
             param = Columns.LogMessage.GetParamterForColumn();
@@ -78,82 +76,82 @@ namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
             cmd.Parameters.Add(param);
 
             param = Columns.CreatedOn.GetParamterForColumn();
-            param.Value = DateTime.Now;
+            param.Value = DateTime.Now.ToString("o");
             cmd.Parameters.Add(param);
 
-            return (cmd);
+            return cmd;
         }
 
-        
-
-        public static DataTable GetFirstTryRecords(SQLiteConnection dbConnection, int selectCount)
+        public static DataTable GetFirstTryRecords(SqliteConnection dbConnection, int selectCount)
         {
             var dataSelectSql = $"SELECT * FROM {TableName} WHERE {Columns.RetryCount.ColumnName} = 0 LIMIT {selectCount}";
-            var cmd = new SQLiteCommand(dataSelectSql, dbConnection);
+            var cmd = new SqliteCommand(dataSelectSql, dbConnection);
             var dt = new DataTable(TableName);
-            var reader = cmd.ExecuteReader();
-            dt.Load(reader);
+            using (var reader = cmd.ExecuteReader())
+            {
+                dt.Load(reader);
+            }
             return dt;
         }
 
-        public static DataTable GetRetryRecords(SQLiteConnection dbConnection, int selectCount)
+        public static DataTable GetRetryRecords(SqliteConnection dbConnection, int selectCount)
         {
             var dataSelectSql = $"SELECT * FROM {TableName} WHERE {Columns.RetryCount.ColumnName} > 0 ORDER BY RetryCount ASC, MessageId ASC LIMIT {selectCount}";
-            var cmd = new SQLiteCommand(dataSelectSql, dbConnection);
+            var cmd = new SqliteCommand(dataSelectSql, dbConnection);
             var dt = new DataTable(TableName);
-            var reader = cmd.ExecuteReader();
-            dt.Load(reader);
+            using (var reader = cmd.ExecuteReader())
+            {
+                dt.Load(reader);
+            }
             return dt;
         }
 
-        public static DataTable GetFailedRecords(SQLiteConnection dbConnection, int selectCount, int expiredMinutes)
+        public static DataTable GetFailedRecords(SqliteConnection dbConnection, int selectCount, int expiredMinutes)
         {
             var dataSelectSql = $"SELECT * FROM {TableName} WHERE {Columns.RetryCount.ColumnName} > 2 AND Cast((JulianDay() - JulianDay({Columns.CreatedOn.ColumnName})) * 24 * 60 As Integer) > {expiredMinutes} LIMIT {selectCount}";
-            
-            var cmd = new SQLiteCommand(dataSelectSql, dbConnection);
+            var cmd = new SqliteCommand(dataSelectSql, dbConnection);
             var dt = new DataTable(TableName);
-            var reader = cmd.ExecuteReader();
-            dt.Load(reader);
+            using (var reader = cmd.ExecuteReader())
+            {
+                dt.Load(reader);
+            }
             return dt;
         }
 
-        public static int UpdateLogRecordRetryCount(SQLiteConnection dbConnection, long messageId)
+        public static int UpdateLogRecordRetryCount(SqliteConnection dbConnection, long messageId)
         {
-            var dataInsertSql = $"UPDATE {TableName} SET {Columns.RetryCount.ColumnName} = {Columns.RetryCount.ColumnName} + 1 WHERE {Columns.MessageId.ColumnName} = {messageId}";
-            Debug.WriteLine(dataInsertSql);
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
-            
+            var dataUpdateSql = $"UPDATE {TableName} SET {Columns.RetryCount.ColumnName} = {Columns.RetryCount.ColumnName} + 1 WHERE {Columns.MessageId.ColumnName} = {messageId}";
+            Debug.WriteLine(dataUpdateSql);
+            var cmd = new SqliteCommand(dataUpdateSql, dbConnection);
             return cmd.ExecuteNonQuery();
         }
 
-        public static int UpdateLogRecordsRetryCount(SQLiteConnection dbConnection, long[] messageIds)
+        public static int UpdateLogRecordsRetryCount(SqliteConnection dbConnection, long[] messageIds)
         {
-            var dataInsertSql = $"UPDATE {TableName} SET {Columns.RetryCount.ColumnName} = {Columns.RetryCount.ColumnName} + 1 WHERE {Columns.MessageId.ColumnName} in ({string.Join(",", messageIds)})";
-            Debug.WriteLine(dataInsertSql);
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
-
+            var dataUpdateSql = $"UPDATE {TableName} SET {Columns.RetryCount.ColumnName} = {Columns.RetryCount.ColumnName} + 1 WHERE {Columns.MessageId.ColumnName} in ({string.Join(",", messageIds)})";
+            Debug.WriteLine(dataUpdateSql);
+            var cmd = new SqliteCommand(dataUpdateSql, dbConnection);
             return cmd.ExecuteNonQuery();
         }
 
-        public static int DeleteProcessedRecord(SQLiteConnection dbConnection, long messageId)
+        public static int DeleteProcessedRecord(SqliteConnection dbConnection, long messageId)
         {
-            var dataInsertSql = $"DELETE FROM {TableName} WHERE {Columns.MessageId.ColumnName} = {messageId}";
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
+            var dataDeleteSql = $"DELETE FROM {TableName} WHERE {Columns.MessageId.ColumnName} = {messageId}";
+            var cmd = new SqliteCommand(dataDeleteSql, dbConnection);
             return cmd.ExecuteNonQuery();
         }
 
-        public static int DeleteProcessedRecords(SQLiteConnection dbConnection, long[] messageIds)
+        public static int DeleteProcessedRecords(SqliteConnection dbConnection, long[] messageIds)
         {
-            var dataInsertSql = $"DELETE FROM {TableName} WHERE {Columns.MessageId.ColumnName} in ({string.Join(",", messageIds)})";
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
+            var dataDeleteSql = $"DELETE FROM {TableName} WHERE {Columns.MessageId.ColumnName} in ({string.Join(",", messageIds)})";
+            var cmd = new SqliteCommand(dataDeleteSql, dbConnection);
             return cmd.ExecuteNonQuery();
         }
-        
-        public static long GetBacklogCount(SQLiteConnection dbConnection)
+
+        public static long GetBacklogCount(SqliteConnection dbConnection)
         {
             var dataSelectSql = $"SELECT COUNT(*) FROM {TableName}";
-            var cmd = new SQLiteCommand(dataSelectSql, dbConnection);
-
+            var cmd = new SqliteCommand(dataSelectSql, dbConnection);
             return (long)cmd.ExecuteScalar();
         }
     }

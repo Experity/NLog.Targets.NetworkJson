@@ -1,123 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8A614770-AEC9-42AD-87BA-CCD53F880A55}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NLog.Targets.NetworkJSON</RootNamespace>
+    <TargetFrameworks>net462;net48;netstandard2.0;net10.0</TargetFrameworks>
     <AssemblyName>NLog.Targets.NetworkJSON</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <TargetFrameworkProfile />
+    <RootNamespace>NLog.Targets.NetworkJSON</RootNamespace>
+    <PackageId>NLog.Targets.NetworkJson</PackageId>
+    <Description>NLog Target for JSON Communication via TCP or UDP with Guaranteed Delivery support</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.SQLite, Version=1.0.107.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.107.0\lib\net46\System.Data.SQLite.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Data.SQLite.EF6, Version=1.0.107.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.107.0\lib\net46\System.Data.SQLite.EF6.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Data.SQLite.Linq, Version=1.0.107.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.107.0\lib\net46\System.Data.SQLite.Linq.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" Condition="Exists('..\README.md')" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="ExtensionMethods\StringExtensions.cs" />
-    <Compile Include="GuaranteedDelivery\IGDEndpointWriter.cs" />
-    <Compile Include="Helper\BasicAuthHelper.cs" />
-    <Compile Include="JsonConverter.cs" />
-    <Compile Include="BaseJsonMessage.cs" />
-    <Compile Include="GuaranteedDelivery\GDServiceTarget.cs" />
-    <Compile Include="GuaranteedDelivery\LocalLogStorageDB\ColumnInfo.cs" />
-    <Compile Include="GuaranteedDelivery\LocalLogStorageDB\LogStorageConnection.cs" />
-    <Compile Include="GuaranteedDelivery\LocalLogStorageDB\LogStorageRecord.cs" />
-    <Compile Include="GuaranteedDelivery\LocalLogStorageDB\LogStorageTable.cs" />
-    <Compile Include="ParameterInfo.cs" />
-    <Compile Include="IConverter.cs" />
-    <Compile Include="IDnsResolver.cs" />
-    <Compile Include="ITransport.cs" />
-    <Compile Include="ITransportClient.cs" />
-    <Compile Include="NetworkJsonTarget.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TcpTransport.cs" />
-    <Compile Include="UdpTransport.cs" />
-    <Compile Include="TcpTransportClient.cs" />
-    <Compile Include="UdpTransportClient.cs" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <!-- Explicit bundle override: 3.x uses SourceGear.sqlite3 instead of vulnerable SQLitePCLRaw.lib.e_sqlite3 -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+    <PackageReference Include="SourceGear.sqlite3" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="NLog" />
   </ItemGroup>
+
+  <!-- System.ComponentModel.DataAnnotations is not auto-referenced in SDK-style projects -->
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <PackageReference Include="System.ComponentModel.Annotations" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\GitVersionTask.3.6.5\build\dotnet\GitVersionTask.targets" Condition="Exists('..\packages\GitVersionTask.3.6.5\build\dotnet\GitVersionTask.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\GitVersionTask.3.6.5\build\dotnet\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GitVersionTask.3.6.5\build\dotnet\GitVersionTask.targets'))" />
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.107.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.107.0\build\net46\System.Data.SQLite.Core.targets'))" />
-  </Target>
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.107.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.107.0\build\net46\System.Data.SQLite.Core.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

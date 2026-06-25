@@ -1,12 +1,12 @@
-﻿using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 
 namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
 {
     public class LogStorageConnection
     {
-        public static SQLiteConnection OpenConnection(string dbFileName)
+        public static SqliteConnection OpenConnection(string dbFileName)
         {
-            var dbConnection = new SQLiteConnection($"Data Source={dbFileName};Version=3;Pooling=True;");
+            var dbConnection = new SqliteConnection($"Data Source={dbFileName};Pooling=True;");
             dbConnection.Open();
             return dbConnection;
         }

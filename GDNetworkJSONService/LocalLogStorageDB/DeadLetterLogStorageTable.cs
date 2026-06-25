@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Data;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using NLog.Targets.NetworkJSON.ExtensionMethods;
 using NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB;
 
@@ -31,25 +31,25 @@ namespace GDNetworkJSONService.LocalLogStorageDB
             public static ColumnInfo ArchiveReason { get; } = new ColumnInfo(nameof(ArchiveReason), "INT2", DbType.Int16, 4);
         }
 
-        public static bool TableExists(SQLiteConnection dbConnection)
+        public static bool TableExists(SqliteConnection dbConnection)
         {
             var tableExistsSql = $"SELECT name FROM sqlite_master WHERE type='table' AND name='{TableName}'";
-            var cmd = new SQLiteCommand(tableExistsSql, dbConnection);
+            var cmd = new SqliteCommand(tableExistsSql, dbConnection);
             var tableName = cmd.ExecuteScalar()?.ToString();
             return (!tableName.IsNullOrEmpty());
         }
 
-        public static void CreateTable(SQLiteConnection dbConnection)
+        public static void CreateTable(SqliteConnection dbConnection)
         {
             var tableCreateSql = $"CREATE TABLE {TableName} ({Columns.Endpoint.ColumnName} {Columns.Endpoint.ColumnDDL}, {Columns.EndpointType.ColumnName} {Columns.EndpointType.ColumnDDL}, {Columns.EndpointExtraInfo.ColumnName} {Columns.EndpointExtraInfo.ColumnDDL}, {Columns.LogMessage.ColumnName} {Columns.LogMessage.ColumnDDL}, {Columns.CreatedOn.ColumnName} {Columns.CreatedOn.ColumnDDL}, {Columns.RetryCount.ColumnName} {Columns.RetryCount.ColumnDDL}, {Columns.ArchivedOn.ColumnName} {Columns.ArchivedOn.ColumnDDL}, {Columns.ArchiveReason.ColumnName} {Columns.ArchiveReason.ColumnDDL})";
-            var cmd = new SQLiteCommand(tableCreateSql, dbConnection);
+            var cmd = new SqliteCommand(tableCreateSql, dbConnection);
             cmd.ExecuteNonQuery();
         }
 
-        public static int InsertLogRecord(SQLiteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage, DateTime createdOn, long retryCount, int archiveReason)
+        public static int InsertLogRecord(SqliteConnection dbConnection, string endpoint, string endpointType, string endpointExtraInfo, string logMessage, DateTime createdOn, long retryCount, int archiveReason)
         {
             var dataInsertSql = $"INSERT INTO {TableName} ({Columns.Endpoint.ColumnName}, {Columns.EndpointType.ColumnName}, {Columns.EndpointExtraInfo.ColumnName}, {Columns.LogMessage.ColumnName}, {Columns.CreatedOn.ColumnName}, {Columns.RetryCount.ColumnName}, {Columns.ArchivedOn.ColumnName}, {Columns.ArchiveReason.ColumnName}) VALUES ({Columns.Endpoint.ParameterName}, {Columns.EndpointType.ParameterName}, {Columns.EndpointExtraInfo.ParameterName}, {Columns.LogMessage.ParameterName}, {Columns.CreatedOn.ParameterName}, {Columns.RetryCount.ParameterName}, {Columns.ArchivedOn.ParameterName}, {Columns.ArchiveReason.ParameterName})";
-            var cmd = new SQLiteCommand(dataInsertSql, dbConnection);
+            var cmd = new SqliteCommand(dataInsertSql, dbConnection);
 
             var param = Columns.Endpoint.GetParamterForColumn();
             param.Value = endpoint;
@@ -58,9 +58,9 @@ namespace GDNetworkJSONService.LocalLogStorageDB
             param = Columns.EndpointType.GetParamterForColumn();
             param.Value = endpointType;
             cmd.Parameters.Add(param);
-            
+
             param = Columns.EndpointExtraInfo.GetParamterForColumn();
-            param.Value = endpointExtraInfo;
+            param.Value = (object)endpointExtraInfo ?? DBNull.Value;
             cmd.Parameters.Add(param);
 
             param = Columns.LogMessage.GetParamterForColumn();
@@ -68,15 +68,15 @@ namespace GDNetworkJSONService.LocalLogStorageDB
             cmd.Parameters.Add(param);
 
             param = Columns.CreatedOn.GetParamterForColumn();
-            param.Value = createdOn;
+            param.Value = createdOn.ToString("o");
             cmd.Parameters.Add(param);
-            
+
             param = Columns.RetryCount.GetParamterForColumn();
             param.Value = retryCount;
             cmd.Parameters.Add(param);
 
             param = Columns.ArchivedOn.GetParamterForColumn();
-            param.Value = DateTime.Now;
+            param.Value = DateTime.Now.ToString("o");
             cmd.Parameters.Add(param);
 
             param = Columns.ArchiveReason.GetParamterForColumn();
@@ -86,11 +86,10 @@ namespace GDNetworkJSONService.LocalLogStorageDB
             return cmd.ExecuteNonQuery();
         }
 
-        public static long GetDeadLetterCount(SQLiteConnection dbConnection)
+        public static long GetDeadLetterCount(SqliteConnection dbConnection)
         {
             var dataSelectSql = $"SELECT COUNT(*) FROM {TableName}";
-            var cmd = new SQLiteCommand(dataSelectSql, dbConnection);
-            
+            var cmd = new SqliteCommand(dataSelectSql, dbConnection);
             return (long)cmd.ExecuteScalar();
         }
     }

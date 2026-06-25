@@ -1,0 +1,68 @@
+name: CI Publish
+
+on:
+  push:
+    branches-ignore:
+      - develop
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci-publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+
+      - name: Compute version
+        id: version
+        shell: bash
+        run: |
+          YY=$(date -u +'%y')
+          MM=$(date -u +'%m')
+          DD=$(date -u +'%d')
+          HMM=$(date -u +'%-H%M')  # %-H: no zero-padding on hour, intentional
+          echo "version=${YY}.${MM}.${DD}.${HMM}-preview" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore NLog.Targets.NetworkJson.sln
+
+      - name: Build
+        run: >
+          dotnet build NLog.Targets.NetworkJson.sln -c Release --no-restore
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        run: dotnet test NLog.Targets.NetworkJson.sln -c Release --no-build
+
+      - name: Pack
+        run: >
+          dotnet pack NLog.Targets.NetworkJson.sln -c Release --no-build
+          --output ./artifacts
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Publish to GitHub Packages
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget add source \
+            --username "${{ github.actor }}" \
+            --password "$GITHUB_TOKEN" \
+            --store-password-in-clear-text \
+            --name github \
+            "https://nuget.pkg.github.com/Experity/index.json"
+          for pkg in ./artifacts/*.nupkg; do
+            dotnet nuget push "$pkg" \
+              --source github \
+              --api-key "$GITHUB_TOKEN" \
+              --skip-duplicate \
+              --timeout 300
+          done

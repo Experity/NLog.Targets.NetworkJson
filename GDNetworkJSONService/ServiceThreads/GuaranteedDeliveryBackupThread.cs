@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SQLite;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.Data.Sqlite;
 using GDNetworkJSONService.Exceptions;
 using GDNetworkJSONService.GDEndpointWriters;
 using GDNetworkJSONService.LocalLogStorageDB;
@@ -17,14 +17,11 @@ namespace GDNetworkJSONService.ServiceThreads
 {
     internal class GuaranteedDeliveryBackupThread
     {
-        public static int TotalSuccessCount;
-        public static int TotalFailedCount;
-
         public string DbFilePath { get; }
 
         public static void ThreadMethod(GuaranteedDeliveryThreadDelegate threadData)
         {
-            SQLiteConnection dbConnection = null;
+            SqliteConnection dbConnection = null;
             var targets = new Dictionary<string, IGDEndpointWriter>();
             while (!threadData.IsAppShuttingDown)
             {
@@ -42,7 +39,6 @@ namespace GDNetworkJSONService.ServiceThreads
                     }
                     else
                     {
-                        // Group messages by endpoint so we can send groups of messages in the writers that support Multi Writes.
                         var endpointGroups = from logMessage in logMessages.AsEnumerable()
                                              group logMessage by logMessage[LogStorageTable.Columns.Endpoint.Index];
 
@@ -95,7 +91,6 @@ namespace GDNetworkJSONService.ServiceThreads
                                             LogStorageTable.UpdateLogRecordsRetryCount(dbConnection, messageIds.ToArray());
                                             threadData.IncFailed(messageIds.Count);
                                         }
-                                            
                                         throw;
                                     }
                                 }
@@ -114,7 +109,6 @@ namespace GDNetworkJSONService.ServiceThreads
                                         }
                                         catch (Exception)
                                         {
-                                            // Fail the message, backup thread will take over for this message until dead letter time.
                                             LogStorageTable.UpdateLogRecordRetryCount(dbConnection, messageId);
                                             threadData.IncFailed(1);
                                             throw;
@@ -122,7 +116,6 @@ namespace GDNetworkJSONService.ServiceThreads
                                     }
                                 }
                             }
-                            // This entire group is unsupported, this should only happen with target and service version conflicts or during development.
                             catch (DeadLetterException dlex)
                             {
                                 foreach (var logMessageRow in endpointGroup)
@@ -130,12 +123,10 @@ namespace GDNetworkJSONService.ServiceThreads
                                     var messageId = (long)logMessageRow[LogStorageTable.Columns.MessageId.Index];
                                     var logMessage = logMessageRow[LogStorageTable.Columns.LogMessage.Index].ToString();
                                     var createdOn = (DateTime)logMessageRow[LogStorageTable.Columns.CreatedOn.Index];
-
                                     DeadLetterLogStorageTable.InsertLogRecord(dbConnection, endpoint, endpointType, endpointExtraInfo, logMessage, createdOn, 0, dlex.ArchiveReasonId);
                                     LogStorageTable.DeleteProcessedRecord(dbConnection, messageId);
                                     threadData.IncFailed(1);
                                 }
-
                             }
                             catch
                             {
@@ -146,7 +137,6 @@ namespace GDNetworkJSONService.ServiceThreads
 
                         try
                         {
-                            // Find and move any dead letters
                             if (LogStorageDbGlobals.MinutesTillDeadLetter <= 0) continue;
                             var failedLogMessages = LogStorageTable.GetFailedRecords(dbConnection, LogStorageDbGlobals.DbSelectCount, LogStorageDbGlobals.MinutesTillDeadLetter);
                             for (var inc = 0; inc < failedLogMessages.Rows.Count; inc++)
@@ -158,12 +148,11 @@ namespace GDNetworkJSONService.ServiceThreads
                                 var logMessage = failedLogMessages.Rows[inc][LogStorageTable.Columns.LogMessage.Index].ToString();
                                 var retryCount = (long)failedLogMessages.Rows[inc][LogStorageTable.Columns.RetryCount.Index];
                                 var createdOn = (DateTime)failedLogMessages.Rows[inc][LogStorageTable.Columns.CreatedOn.Index];
-
                                 DeadLetterLogStorageTable.InsertLogRecord(dbConnection, endpoint, endpointType, endpointExtraInfo, logMessage, createdOn, retryCount, (int)DeadLetterLogStorageTable.ArchiveReasonId.MessageExpiration);
                                 LogStorageTable.DeleteProcessedRecord(dbConnection, messageId);
                             }
                         }
-                        catch {}
+                        catch { }
                     }
                 }
                 catch
@@ -173,7 +162,6 @@ namespace GDNetworkJSONService.ServiceThreads
                     targets.Clear();
                     Thread.Sleep(60000);
                 }
-                
             }
             threadData.ThreadHasShutdown();
         }

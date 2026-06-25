@@ -1,5 +1,5 @@
-﻿using System.Data;
-using System.Data.SQLite;
+using System.Data;
+using Microsoft.Data.Sqlite;
 
 namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
 {
@@ -20,9 +20,9 @@ namespace NLog.Targets.NetworkJSON.GuaranteedDelivery.LocalLogStorageDB
         public string ParameterName { get; }
         public DbType ParameterType { get; }
 
-        public SQLiteParameter GetParamterForColumn()
+        public SqliteParameter GetParamterForColumn()
         {
-            return new SQLiteParameter(ParameterName, ParameterType, ColumnName);
+            return new SqliteParameter(ParameterName, ParameterType);
         }
     }
 }

@@ -28,10 +28,10 @@ namespace NLog.Targets.NetworkJSON
             var jsonObject = JObject.FromObject(jsonMessage);
             
             // If we have stack frame info, add File and Line properties
-            if (logEventInfo.UserStackFrame != null)
+            if (logEventInfo.CallerLineNumber != 0 || logEventInfo.CallerFilePath != null)
             {
-                logEventInfo.Properties.Add("Line", logEventInfo.UserStackFrame.GetFileLineNumber().ToString(CultureInfo.InvariantCulture));
-                logEventInfo.Properties.Add("File", logEventInfo.UserStackFrame.GetFileName());
+                logEventInfo.Properties.Add("Line", logEventInfo.CallerLineNumber.ToString(CultureInfo.InvariantCulture));
+                logEventInfo.Properties.Add("File", logEventInfo.CallerFilePath);
             }
 
             // If we are dealing with an exception, add exception properties to LogEventInfo properties

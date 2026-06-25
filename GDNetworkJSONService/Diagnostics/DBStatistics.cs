@@ -8,7 +8,5 @@ namespace GDNetworkJSONService.Diagnostics
 {
     class DBStatistics
     {
-        public static int LastMessageCount;
-
     }
 }

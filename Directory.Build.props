@@ -1,0 +1,37 @@
+<Project>
+
+  <PropertyGroup>
+    <Company>Experity</Company>
+    <Product>NLog.Targets.NetworkJson</Product>
+    <Copyright>Copyright © Experity</Copyright>
+    <!-- Sentinel version; CI overrides with /p:Version=YY.MM.DD.HMM -->
+    <Version Condition="'$(Version)' == ''">99.99.0.0</Version>
+    <!-- Strip pre-release suffixes — AssemblyVersion/FileVersion must be numeric-only -->
+    <_VersionNumeric>$([System.Text.RegularExpressions.Regex]::Match($(Version), '^\d+(\.\d+)*').Value)</_VersionNumeric>
+    <AssemblyVersion>$(_VersionNumeric)</AssemblyVersion>
+    <FileVersion>$(_VersionNumeric)</FileVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <!-- SourceGear.sqlite3 ships native binaries; .NET Framework builds must declare a RID -->
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <!-- Suppress attributes still declared in legacy AssemblyInfo.cs files -->
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyTrademarkAttribute>false</GenerateAssemblyTrademarkAttribute>
+    <GenerateAssemblyCultureAttribute>false</GenerateAssemblyCultureAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+  </PropertyGroup>
+
+  <!-- Pack automatically during Debug builds, writing to the local NuGet feed -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' AND '$(IsPackable)' != 'false'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>$(UserProfile)\nuget-packages\</PackageOutputPath>
+  </PropertyGroup>
+
+</Project>

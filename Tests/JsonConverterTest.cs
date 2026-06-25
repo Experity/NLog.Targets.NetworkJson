@@ -26,21 +26,21 @@ namespace NLog.Targets.NetworkJSON.Tests
 
                 var jsonObject = new JsonConverter().GetLogEventJson(logEvent);
 
-                Assert.IsNotNull(jsonObject);
+                Assert.That(jsonObject, Is.Not.Null);
                 // Always present properties
-                Assert.AreEqual("Test Log Message", jsonObject.Value<string>("message"));
-                Assert.AreEqual(timestamp, jsonObject.Value<DateTime>("clientTimestamp"));
-                Assert.AreEqual(LogLevel.Info.ToString(), jsonObject.Value<string>("logLevel"));
-                Assert.Greater(jsonObject.Value<int>("logSequenceId"), 0);
+                Assert.That(jsonObject.Value<string>("message"), Is.EqualTo("Test Log Message"));
+                Assert.That(jsonObject.Value<DateTime>("clientTimestamp"), Is.EqualTo(timestamp));
+                Assert.That(jsonObject.Value<string>("logLevel"), Is.EqualTo(LogLevel.Info.ToString()));
+                Assert.That(jsonObject.Value<int>("logSequenceId"), Is.GreaterThan(0));
                 
                 // Custom properties
-                Assert.AreEqual("customvalue1", jsonObject.Value<string>("customproperty1"));
-                Assert.AreEqual("customvalue2", jsonObject.Value<string>("customproperty2"));
-                Assert.AreEqual(199, jsonObject.Value<int>("custompropertyint"));
-                Assert.AreEqual(new[] { 1, 2, 3 }, jsonObject["custompropertyarray"].ToObject<int[]>());
-                
+                Assert.That(jsonObject.Value<string>("customproperty1"), Is.EqualTo("customvalue1"));
+                Assert.That(jsonObject.Value<string>("customproperty2"), Is.EqualTo("customvalue2"));
+                Assert.That(jsonObject.Value<int>("custompropertyint"), Is.EqualTo(199));
+                Assert.That(jsonObject["custompropertyarray"].ToObject<int[]>(), Is.EqualTo(new[] { 1, 2, 3 }));
+
                 // Make sure we have our 8 base properties (4 required and 4 custom).
-                Assert.AreEqual(8, jsonObject.Count);
+                Assert.That(jsonObject.Count, Is.EqualTo(8));
             }
 
             [Test]
@@ -58,18 +58,18 @@ namespace NLog.Targets.NetworkJSON.Tests
 
                 var jsonObject = new JsonConverter().GetLogEventJson(logEvent);
 
-                Assert.IsNotNull(jsonObject);
-                Assert.AreEqual("Test Message", jsonObject.Value<string>("message"));
-                Assert.AreEqual(timestamp, jsonObject.Value<DateTime>("clientTimestamp"));
-                Assert.AreEqual(LogLevel.Error.ToString(), jsonObject.Value<string>("logLevel"));
-                Assert.Greater(jsonObject.Value<int>("logSequenceId"), 0);
+                Assert.That(jsonObject, Is.Not.Null);
+                Assert.That(jsonObject.Value<string>("message"), Is.EqualTo("Test Message"));
+                Assert.That(jsonObject.Value<DateTime>("clientTimestamp"), Is.EqualTo(timestamp));
+                Assert.That(jsonObject.Value<string>("logLevel"), Is.EqualTo(LogLevel.Error.ToString()));
+                Assert.That(jsonObject.Value<int>("logSequenceId"), Is.GreaterThan(0));
 
-                Assert.AreEqual(null, jsonObject.Value<string>("ExceptionSource"));
-                Assert.AreEqual("div by 0", jsonObject.Value<string>("ExceptionMessage"));
-                Assert.AreEqual(null, jsonObject.Value<string>("StackTrace"));
+                Assert.That(jsonObject.Value<string>("ExceptionSource"), Is.Null);
+                Assert.That(jsonObject.Value<string>("ExceptionMessage"), Is.EqualTo("div by 0"));
+                Assert.That(jsonObject.Value<string>("StackTrace"), Is.Null);
 
                 // Base properties plus 3 new properties related to exceptions
-                Assert.AreEqual(7, jsonObject.Count);
+                Assert.That(jsonObject.Count, Is.EqualTo(7));
             }
 
             [Test]
@@ -87,18 +87,18 @@ namespace NLog.Targets.NetworkJSON.Tests
 
                 var jsonObject = new JsonConverter().GetLogEventJson(logEvent);
 
-                Assert.IsNotNull(jsonObject);
-                Assert.AreEqual("Test Message", jsonObject.Value<string>("message"));
-                Assert.AreEqual(timestamp, jsonObject.Value<DateTime>("clientTimestamp"));
-                Assert.AreEqual(LogLevel.Error.ToString(), jsonObject.Value<string>("logLevel"));
-                Assert.Greater(jsonObject.Value<int>("logSequenceId"), 0);
+                Assert.That(jsonObject, Is.Not.Null);
+                Assert.That(jsonObject.Value<string>("message"), Is.EqualTo("Test Message"));
+                Assert.That(jsonObject.Value<DateTime>("clientTimestamp"), Is.EqualTo(timestamp));
+                Assert.That(jsonObject.Value<string>("logLevel"), Is.EqualTo(LogLevel.Error.ToString()));
+                Assert.That(jsonObject.Value<int>("logSequenceId"), Is.GreaterThan(0));
 
-                Assert.AreEqual(null, jsonObject.Value<string>("ExceptionSource"));
-                Assert.AreEqual("Outer Exception Detail - Inner Exception Detail", jsonObject.Value<string>("ExceptionMessage"));
-                Assert.AreEqual(null, jsonObject.Value<string>("StackTrace"));
+                Assert.That(jsonObject.Value<string>("ExceptionSource"), Is.Null);
+                Assert.That(jsonObject.Value<string>("ExceptionMessage"), Is.EqualTo("Outer Exception Detail - Inner Exception Detail"));
+                Assert.That(jsonObject.Value<string>("StackTrace"), Is.Null);
 
                 // Base properties plus 3 new properties related to exceptions
-                Assert.AreEqual(7, jsonObject.Count);
+                Assert.That(jsonObject.Count, Is.EqualTo(7));
             }
 
             [Test]
@@ -125,20 +125,20 @@ namespace NLog.Targets.NetworkJSON.Tests
 
                 var jsonObject = new JsonConverter().GetLogEventJson(logEvent);
 
-                Assert.IsNotNull(jsonObject);
-                Assert.AreEqual("Test Message", jsonObject.Value<string>("message"));
-                Assert.AreEqual(timestamp, jsonObject.Value<DateTime>("clientTimestamp"));
-                Assert.AreEqual(LogLevel.Error.ToString(), jsonObject.Value<string>("logLevel"));
-                Assert.Greater(jsonObject.Value<int>("logSequenceId"), 0);
+                Assert.That(jsonObject, Is.Not.Null);
+                Assert.That(jsonObject.Value<string>("message"), Is.EqualTo("Test Message"));
+                Assert.That(jsonObject.Value<DateTime>("clientTimestamp"), Is.EqualTo(timestamp));
+                Assert.That(jsonObject.Value<string>("logLevel"), Is.EqualTo(LogLevel.Error.ToString()));
+                Assert.That(jsonObject.Value<int>("logSequenceId"), Is.GreaterThan(0));
 
-                Assert.AreEqual(null, jsonObject.Value<string>("ExceptionSource"));
+                Assert.That(jsonObject.Value<string>("ExceptionSource"), Is.Null);
                 const string expectedExceptionDetail =
                     "Outer Exception Detail - Inner Exception Detail - 1 - Inner Exception Detail - 2 - Inner Exception Detail - 3 - Inner Exception Detail - 4 - Inner Exception Detail - 5 - Inner Exception Detail - 6 - Inner Exception Detail - 7 - Inner Exception Detail - 8 - Inner Exception Detail - 9 - Inner Exception Detail - 10";
-                Assert.AreEqual(expectedExceptionDetail, jsonObject.Value<string>("ExceptionMessage"));
-                Assert.AreEqual(null, jsonObject.Value<string>("StackTrace"));
+                Assert.That(jsonObject.Value<string>("ExceptionMessage"), Is.EqualTo(expectedExceptionDetail));
+                Assert.That(jsonObject.Value<string>("StackTrace"), Is.Null);
 
                 // Base properties plus 3 new properties related to exceptions
-                Assert.AreEqual(7, jsonObject.Count);
+                Assert.That(jsonObject.Count, Is.EqualTo(7));
             }
 
             [Test]
@@ -156,11 +156,11 @@ namespace NLog.Targets.NetworkJSON.Tests
 
                 var jsonObject = new JsonConverter().GetLogEventJson(logEvent);
 
-                Assert.IsNotNull(jsonObject);
-                Assert.AreEqual(300, jsonObject.Value<string>("message").Length);
-                Assert.AreEqual(timestamp, jsonObject.Value<DateTime>("clientTimestamp"));
-                Assert.AreEqual(LogLevel.Info.ToString(), jsonObject.Value<string>("logLevel"));
-                Assert.Greater(jsonObject.Value<int>("logSequenceId"), 0);
+                Assert.That(jsonObject, Is.Not.Null);
+                Assert.That(jsonObject.Value<string>("message").Length, Is.EqualTo(300));
+                Assert.That(jsonObject.Value<DateTime>("clientTimestamp"), Is.EqualTo(timestamp));
+                Assert.That(jsonObject.Value<string>("logLevel"), Is.EqualTo(LogLevel.Info.ToString()));
+                Assert.That(jsonObject.Value<int>("logSequenceId"), Is.GreaterThan(0));
             }
         }
     }
